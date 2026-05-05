@@ -47,8 +47,8 @@ See `docker-compose.yaml` for complete list of configurable options.
 
 ## 📂 Volumes
 
-- `./rootfs/config/pwndrop` - Data storage
-- `./rootfs/data/pwndrop` - Data storage
+- `./volumes/config/pwndrop` - Data storage
+- `./volumes/data/pwndrop` - Data storage
 
 ## 🔍 Logging
 
