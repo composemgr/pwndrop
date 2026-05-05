@@ -21,8 +21,8 @@ services:
       PUID: ${SERVICE_USER:-1000}
       PGID: ${SERVICE_GROUP:-1000}
     volumes:
-      - ./rootfs/config/pwndrop:/config
-      - ./rootfs/data/pwndrop:/data
+      - ./volumes/config/pwndrop:/config
+      - ./volumes/data/pwndrop:/data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8110"]
       interval: 30s
