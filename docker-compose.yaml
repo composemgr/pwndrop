@@ -1,5 +1,6 @@
 # nginx proxy address - http://172.17.0.1:8110
 
+name: pwndrop
 x-logging: &default-logging
   driver: json-file
   options:
@@ -8,27 +9,31 @@ x-logging: &default-logging
 
 services:
   pwndrop:
-    image: pwndrop/pwndrop:latest
+    image: ghcr.io/nikitastupin/pwndrop:latest
+    pull_policy: always
     container_name: pwndrop-app
-    restart: unless-stopped
+    hostname: ${BASE_HOST_NAME:-$HOSTNAME}
+    restart: always
     logging: *default-logging
     networks:
       - pwndrop
     ports:
-      - "8110:8110"
+      - "172.17.0.1:8110:8080"
     environment:
       TZ: ${TZ:-America/New_York}
-      PUID: ${SERVICE_USER:-1000}
-      PGID: ${SERVICE_GROUP:-1000}
+      PWNDROP_SECRET: ${APP_SECRET_KEY:-changeme_secret_key_min_32_chars}
+      PWNDROP_ADMIN_USER: ${APP_ADMIN_USER:-admin}
+      PWNDROP_ADMIN_PASS: ${APP_ADMIN_PASS:-changeme_admin_password}
     volumes:
       - ./volumes/config/pwndrop:/config
       - ./volumes/data/pwndrop:/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8110"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080"]
       interval: 30s
       timeout: 10s
       retries: 3
 
 networks:
   pwndrop:
+    name: pwndrop
     external: false
