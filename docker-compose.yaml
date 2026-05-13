@@ -17,6 +17,8 @@ services:
     logging: *default-logging
     networks:
       - pwndrop
+      - proxy
+      - cloudflare
     ports:
       - "172.17.0.1:8110:8080"
     environment:
@@ -24,6 +26,8 @@ services:
       PWNDROP_SECRET: ${APP_SECRET_KEY:-changeme_secret_key_min_32_chars}
       PWNDROP_ADMIN_USER: ${APP_ADMIN_USER:-admin}
       PWNDROP_ADMIN_PASS: ${APP_ADMIN_PASS:-changeme_admin_password}
+      CONTAINER_NAME: pwndrop-app
+      HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
     volumes:
       - ./volumes/config/pwndrop:/config
       - ./volumes/data/pwndrop:/data
@@ -32,8 +36,28 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    labels:
+      - 'traefik.enable=true'
+      - 'cloudflare.enable=true'
+      - 'traefik.docker.network=proxy'
+      - 'cloudflare.service=http://pwndrop-app:8080'
+      - 'cloudflare.hostname=pwndrop.${CLOUDFLARE_ZONE_NAME:-}'
+      - 'traefik.http.routers.pwndrop-app.entrypoints=http'
+      - 'traefik.http.routers.pwndrop-app-secure.tls=true'
+      - 'traefik.http.routers.pwndrop-app.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
+      - 'traefik.http.middlewares.pwndrop-app-https-redirect.redirectscheme.scheme=https'
+      - 'traefik.http.routers.pwndrop-app.middlewares=pwndrop-app-https-redirect'
+      - 'traefik.http.routers.pwndrop-app-secure.entrypoints=https'
+      - 'traefik.http.routers.pwndrop-app-secure.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
+      - 'traefik.http.routers.pwndrop-app-secure.tls.certresolver=cloudflare'
+      - 'traefik.http.routers.pwndrop-app-secure.service=pwndrop-app'
+      - 'traefik.http.services.pwndrop-app.loadbalancer.server.port=8080'
 
 networks:
   pwndrop:
     name: pwndrop
     external: false
+  proxy:
+    external: true
+  cloudflare:
+    external: true
